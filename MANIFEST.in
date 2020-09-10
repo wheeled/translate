@@ -1,0 +1,6 @@
+prune translate/tests
+prune translate/develop
+
+recursive-exclude translate test_*.py tests/*.py
+
+include *.rst
