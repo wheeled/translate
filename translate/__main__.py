@@ -69,6 +69,7 @@ def parse_args(args, info):
 def main(arg_list=None):
     TRANSLATOR = {
         'docx': 'translate.translate_base.TranslateDocx',
+        'html': 'translate.translate_base.TranslateHtml',
         'pptx': 'translate.translate_base.TranslatePptx',
         'txt': 'translate.translate_base.TranslateText',
         'xlsx': 'translate.translate_base.TranslateExcel',
@@ -102,6 +103,7 @@ def main(arg_list=None):
                      if key in ['condense', 'cross_check']}
 
         file_format = args.filename.rsplit('.', 1)[1]
+        # TODO: is there a more understandable way to achieve the next two lines?
         module_name, class_name = TRANSLATOR[file_format].rsplit('.', 1)
         file_translator = getattr(import_module(module_name), class_name)
         file_translator(args.filepath, args.filename, babelfish, **ft_kwargs)
