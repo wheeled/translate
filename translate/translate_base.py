@@ -1,11 +1,10 @@
 # coding: UTF-8
-from __future__ import absolute_import
+import re
 
-try:
-    import html
-except ImportError:
-    import HTMLParser
-    html = HTMLParser.HTMLParser()
+import lxml.etree
+import lxml.html
+
+import html
 import json
 import os
 import sys
@@ -300,12 +299,11 @@ class TranslateExcel(TranslateBase):
     def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
         super(TranslateExcel, self).__init__(filepath, filename, translator,
                                              target=target, condense=condense, cross_check=cross_check)
+        self.wb = load_workbook(os.path.join(self.filepath, self.source))
         self.execute(self.translate)
 
     def translate(self):
         """ Perform the translation of each text element """
-        self.wb = load_workbook(os.path.join(self.filepath, self.source))
-
         for sheetname in self.wb.sheetnames:
             for row in self.wb[sheetname]:
                 for cell in row:
@@ -321,11 +319,11 @@ class TranslateDocx(TranslateBase):
     def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
         super(TranslateDocx, self).__init__(filepath, filename, translator,
                                             target=target, condense=condense, cross_check=cross_check)
+        self.document = Document(os.path.join(self.filepath, self.source))
         self.execute(self.translate)
 
     def translate(self):
         """ Break the document up into text elements for translation """
-        self.document = Document(os.path.join(self.filepath, self.source))
         self.set_language(self.document)
         self.translate_paragraphs(self.document.paragraphs)
         for table in self.document.tables:
@@ -346,11 +344,11 @@ class TranslatePptx(TranslateBase):
     def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
         super(TranslatePptx, self).__init__(filepath, filename, translator,
                                             target=target, condense=condense, cross_check=cross_check)
+        self.prs = Presentation(os.path.join(self.filepath, self.source))
         self.execute(self.translate)
 
     def translate(self):
         """ Perform the translation of each text element """
-        self.prs = Presentation(os.path.join(self.filepath, self.source))
         self.set_language(self.prs)
 
         for slide in self.prs.slides:
@@ -381,6 +379,46 @@ class TranslatePptx(TranslateBase):
             else:
                 yield br
                 br = False
+
+
+class TranslateHtml(TranslateBase):
+    """ Translate text in an HMTL (.html) file """
+    def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
+        super(TranslateHtml, self).__init__(filepath, filename, translator,
+                                            target=target, condense=condense, cross_check=cross_check)
+        self.web_page = lxml.html.parse(os.path.join(self.filepath, self.source)).getroot()
+        self.execute(self.translate)
+
+    def translate(self):
+        """ Translate method for html files to translate each element with text. """
+        for attr in ['text', 'tail']:
+            text = [
+                element for element in self.web_page.iter()
+                if not isinstance(element, lxml.html.HtmlComment)
+                if element.tag not in ['html', 'head', 'meta', 'style', 'script']  #, 'a']
+                if getattr(element, attr) is not None
+                if getattr(element, attr).strip()
+            ]
+            for element in text:
+                trimmed_text = HtmlText(getattr(element, attr))
+                setattr(element, attr, trimmed_text.replace(self.translator.translate(trimmed_text.body)))
+        with open(os.path.join(self.filepath, self.target), 'wb') as f:
+            f.write(lxml.etree.tostring(self.web_page, method='html'))
+            pass
+
+
+class HtmlText(object):
+    def __init__(self, string):
+        body = re.escape(string.strip())
+        m = re.search(f'(?P<body>{body})', string)
+        self.body = m["body"] if m else ''
+        start, finish = m.span()
+        self.leading_ws = string[:start]
+        self.trailing_ws = string[finish:]
+        self.full_text = self.body.join([self.leading_ws, self.trailing_ws])
+
+    def replace(self, body):
+        return body.join([self.leading_ws, self.trailing_ws])
 
 
 class TranslateText(TranslateBase):

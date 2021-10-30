@@ -11,6 +11,7 @@ The script does the heavy lifting by using other open source libraries, in parti
 * openpyxl https://openpyxl.readthedocs.io/en/stable/
 * python-docx https://python-docx.readthedocs.io/en/latest/
 * python-pptx https://python-pptx.readthedocs.io/en/latest/
+* lmxl-etree https://lxml.de/index.html#documentation
 
 The objective of ``translate`` is to "do no harm" by treading lightly over an existing document, finding instances of text that can be translated, and replacing that text in the original document while disturbing as little else as possible in the process.  This contrasts with the philosophy of the above three Open XML projects, which is more about programmatically implementing the Office Open XML standards (https://www.ecma-international.org/publications/standards/Ecma-376.htm) and to read and/or compose documents in compliance with the standard.
 
@@ -24,7 +25,7 @@ Installation
 ------------
 The ``translate`` repo is not presently published so that it can not be found by ``pip``, ``brew`` or ``easy-install``.  Installation involves cloning the repo onto your machine and then installing from there::
 
-    hg clone https://WheeleD@bitbucket.org/WheeleD/translate
+    git clone https://github.com/wheeled/translate
     pip3 install -e /path/to/your/local/repo
 
 Usage
@@ -52,7 +53,7 @@ The usage in a script is also very straightforward::
 
         from translate import GoogleTranslate, TranslateDocx
 
-        babelfish = GoogleTranslate('fr')
+        babelfish = GoogleTranslate(creds, 'fr')
         TranslateDocx('/users/me/documents', 'my_document.docx', babelfish)
 
 Note the above example requires installation, and the existence of credentials as an environment variable. The instance name in the example, ``babelfish``, is a nod to Douglas Adams who foresaw this capability.
@@ -143,7 +144,7 @@ cross-check (optional)
 
 Capabilities
 ------------
-The ``translate`` tool is heavily dependent on the Office Open XML libraries, and the scope of their coverage of documents created by commercial applications.  The following notes, while not comprehensive, illustrate what can and can't be achieved.  Some of the unsupported capabilities would be possible by employing unreleased branches of the library - with one exception, ``translate`` relies on the latest released branch for stability and ease of installation.
+The ``translate`` tool is heavily dependent on the Office Open XML libraries, and the scope of their coverage of documents created by commercial applications.  The following notes, while not comprehensive, illustrate what can and can't be achieved.  Some of the unsupported capabilities would be possible by employing unreleased branches of the library - with one exception, ``translate`` relies on a stable released branch for stability and ease of installation.
 
 DOCX format
 
@@ -192,10 +193,21 @@ PPTX format
  - Document property attribute values
  - Speaker's notes
 
+HTML format
+
+* Translates the 'text' and 'tail' of HTML elements, excluding the following tags:
+
+ - 'html', 'head', 'meta', 'style', 'script'
+
+TXT format
+
+* Translates each line of the text file
+
 Other Notes
 -----------
 There is a conflict between preserving formatting within a paragraph and achieving the best translation.  In this iteration of ``translate`` the assumption is that the translation achieved using this tool is a good start, but will require polishing by a native speaker to produce the finished product.  In that case, the preservation of the formatting serves as an indication to the native speaker that the author intended to emphasize certain points and she can take this into account.
 
-If the tool will be producing the finished product (as a 'good enough' translation for the job at hand) then it would be better to sacrifice the formating within the paragraph so that the entire paragraph can be submitted to Google at once.  Looking for feedback on this point - disabling this feature could be implemented as an additional keyword argument.
+If the tool will be producing the finished product (as a 'good enough' translation for the job at hand) then it would be better to sacrifice the formatting within the paragraph so that the entire paragraph can be submitted to Google at once.  Looking for feedback on this point - disabling this feature could be implemented as an additional keyword argument.
 
-03-Sep-2018
+Originally documented 03-Sep-2018
+Updated 30-Oct-2021

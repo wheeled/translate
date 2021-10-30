@@ -53,7 +53,7 @@ setup(name='translate',
     author_email=__author_email__,
     url=__url__,
     license=__license__,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",  # need to verify this ...
+    python_requires=">=3.5",  # need to verify this ...
     # install_requires=[
     #     'jdcal', 'et_xmlfile',
     #     ],
@@ -64,8 +64,9 @@ setup(name='translate',
                  'Operating System :: POSIX',
                  'License :: OSI Approved :: MIT License',
                  'License :: OSI Approved :: Apache License',
-                 'Programming Language :: Python',
                  'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
+                 'Programming Language :: Python :: 3.8',
+                 'Programming Language :: Python :: 3.9',
                  ],
     )
