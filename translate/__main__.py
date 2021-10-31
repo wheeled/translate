@@ -5,14 +5,19 @@ from __future__ import absolute_import
 # TODO: look at multi-threading to speed up translation (probably can't do that with text file)
 
 import argparse
-from importlib import import_module
 import logging
 import pprint
 import os
 import sys
 from google.cloud.translate import Client
 
-from translate.translate_base import CREDS, GoogleTranslate
+# sys.path extension is to support running module under Terminal
+module_path = os.path.realpath(__file__).rsplit('/', 2)[0]
+sys.path.extend([module_path])
+
+from translate.translate_base import (
+    CREDS, GoogleTranslate, TranslateDocx, TranslateExcel, TranslateHtml, TranslatePptx, TranslateText
+)
 
 if not sys.warnoptions:
     import warnings
@@ -28,7 +33,6 @@ class ListLanguages(object):
 
     def request_languages(self):
         """ Lists all available languages. """
-        # translate_client = Client.from_service_account_json(CREDS)
         return self.client.get_languages()
 
     def print_response(self, results):
@@ -68,11 +72,11 @@ def parse_args(args, info):
 
 def main(arg_list=None):
     TRANSLATOR = {
-        'docx': 'translate.translate_base.TranslateDocx',
-        'html': 'translate.translate_base.TranslateHtml',
-        'pptx': 'translate.translate_base.TranslatePptx',
-        'txt': 'translate.translate_base.TranslateText',
-        'xlsx': 'translate.translate_base.TranslateExcel',
+        'docx': TranslateDocx,
+        'html': TranslateHtml,
+        'pptx': TranslatePptx,
+        'txt': TranslateText,
+        'xlsx': TranslateExcel,
     }
 
     logging.basicConfig(level=logging.WARNING)
@@ -103,9 +107,7 @@ def main(arg_list=None):
                      if key in ['condense', 'cross_check']}
 
         file_format = args.filename.rsplit('.', 1)[1]
-        # TODO: is there a more understandable way to achieve the next two lines?
-        module_name, class_name = TRANSLATOR[file_format].rsplit('.', 1)
-        file_translator = getattr(import_module(module_name), class_name)
+        file_translator = TRANSLATOR[file_format]
         file_translator(args.filepath, args.filename, babelfish, **ft_kwargs)
 
         if hasattr(babelfish, 'stats'):

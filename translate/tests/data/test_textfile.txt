@@ -5,7 +5,9 @@ The following items are in the shopping list:
 * Orange juice
 
 Table 1 - Responsibility Matrix
-Task        ResponsibleEverything  Me
+Task        Responsible
+Everything  Me
+
 Typo in Paragraph
 This paragraph has a tpyogarphical error in it.
 

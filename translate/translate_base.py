@@ -382,6 +382,8 @@ class TranslatePptx(TranslateBase):
 
 
 class TranslateHtml(TranslateBase):
+    # TODO: change lang attr e.g. <html class="no-js" lang="en-US">
+    #  how does this appear in multi-language web sites so the browser can auto-select?
     """ Translate text in an HMTL (.html) file """
     def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
         super(TranslateHtml, self).__init__(filepath, filename, translator,
@@ -408,6 +410,7 @@ class TranslateHtml(TranslateBase):
 
 
 class HtmlText(object):
+    # TODO: is this perhaps needed in other translators?
     def __init__(self, string):
         body = re.escape(string.strip())
         m = re.search(f'(?P<body>{body})', string)
