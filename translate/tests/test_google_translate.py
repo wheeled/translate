@@ -803,7 +803,7 @@ def test_main(GoogleTranslate, TranslateBase, TranslateText, datadir, correct_re
     log = logging.getLogger('translate.__main__')
     del log.manager.loggerDict['translate.__main__']
     with mock.patch.object(GoogleTranslate, "__init__", return_value=None) as gti:
-        with mock.patch.object(TranslateBase, "__init__", return_value=None) as tti:
+        with mock.patch.object(TranslateText, "__init__", return_value=None) as tti:
             with mock.patch.object(TranslateBase, "execute", return_value=None) as tte:
                 from translate.__main__ import main
                 with category(error):

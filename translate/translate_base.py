@@ -282,16 +282,26 @@ class TranslateBase(object):
         return True
 
 
-class TranslateExcel(TranslateBase):
+class PreserveWhitespace(object):
+    # TODO: incorporate in other translators
+    def __init__(self, string):
+        body = re.escape(string.strip())
+        m = re.search(f'(?P<body>{body})', string)
+        self.body = m["body"] if m else ''
+        start, finish = m.span()
+        self.leading_ws = string[:start]
+        self.trailing_ws = string[finish:]
+        self.full_text = self.body.join([self.leading_ws, self.trailing_ws])
 
+    def replace(self, body):
+        return body.join([self.leading_ws, self.trailing_ws])
+
+
+class TranslateExcel(TranslateBase):
     """
     Translate text in an Excel (.xlsx) spreadsheet file
 
-    Released version of openpyxl does not support preservation of embedded images.  See:
-    https://bitbucket.org/openpyxl/openpyxl/issues/870/losing-images-after-loading-and-saving-a
-    May now be working in the latest unreleased version, see:
-    https://bitbucket.org/openpyxl/openpyxl/pull-requests/267/image-read/diff
-    https://bitbucket.org/openpyxl/openpyxl/commits/9b54a9ec29d1
+    Previously released version of openpyxl does not support preservation of embedded images.
     """
     # TODO: [future] check not removing embedded images, once this is available in openpyxl
     # TODO: [future] preserve rich text formatting within a cell if/when this is available in openpyxl
@@ -402,26 +412,11 @@ class TranslateHtml(TranslateBase):
                 if getattr(element, attr).strip()
             ]
             for element in text:
-                trimmed_text = HtmlText(getattr(element, attr))
+                trimmed_text = PreserveWhitespace(getattr(element, attr))
                 setattr(element, attr, trimmed_text.replace(self.translator.translate(trimmed_text.body)))
         with open(os.path.join(self.filepath, self.target), 'wb') as f:
             f.write(lxml.etree.tostring(self.web_page, method='html'))
             pass
-
-
-class HtmlText(object):
-    # TODO: is this perhaps needed in other translators?
-    def __init__(self, string):
-        body = re.escape(string.strip())
-        m = re.search(f'(?P<body>{body})', string)
-        self.body = m["body"] if m else ''
-        start, finish = m.span()
-        self.leading_ws = string[:start]
-        self.trailing_ws = string[finish:]
-        self.full_text = self.body.join([self.leading_ws, self.trailing_ws])
-
-    def replace(self, body):
-        return body.join([self.leading_ws, self.trailing_ws])
 
 
 class TranslateText(TranslateBase):
@@ -429,18 +424,15 @@ class TranslateText(TranslateBase):
     def __init__(self, filepath, filename, translator, target=None, condense=False, cross_check=False):
         super(TranslateText, self).__init__(filepath, filename, translator,
                                             target=target, condense=condense, cross_check=cross_check)
+        with open(os.path.join(self.filepath, self.source), 'r') as f:
+            self.text = [line for line in f]
         self.execute(self.translate)
 
     def translate(self):
         """ Translate method for text files to translate each line of text. """
-        with open(os.path.join(self.filepath, self.source), 'rU') as f:
-            lines = [line.rstrip('\n').rstrip('\r') for line in f]
-
         with open(os.path.join(self.filepath, self.target), 'w') as f:
-            for line in lines:
-                if int(sys.version.split('.')[0]) < 3:
-                    f.write(''.join((self.translator.translate(line).encode('UTF-8'), '\n')))
-                else:
-                    f.write(''.join((self.translator.translate(line), '\n')))
+            for line in self.text:
+                trimmed_text = PreserveWhitespace(line)
+                f.write(trimmed_text.replace(self.translator.translate(trimmed_text.body)))
 
 
